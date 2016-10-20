@@ -55,40 +55,10 @@ object KafkaWordCount {
   }
 }
 
-// Produces some random words between 1 and 100.
-//解释一下参数的意思，bb0103003:2181 表示producer的地址和端口, testlxr表示topic，3表示每秒发多少条消息，5表示每条消息中有几个单词
-object KafkaWordCountProducer {
 
-  def main(args: Array[String]) {
 
-    //屏蔽日志
-    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
-    Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.OFF)
-    
-    val Array(brokers, topic, messagesPerSec, wordsPerMessage) = args
-
-    // Zookeeper connection properties
-    val props = new HashMap[String, Object]()
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, brokers)
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringSerializer")
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-      "org.apache.kafka.common.serialization.StringSerializer")
-
-    val producer = new KafkaProducer[String, String](props)
-
-    // Send some messages
-    while(true) {
-      (1 to messagesPerSec.toInt).foreach { messageNum =>
-        val str = (1 to wordsPerMessage.toInt).map(x => scala.util.Random.nextInt(10).toString)
-          .mkString(" ")
-
-        val message = new ProducerRecord[String, String](topic, null, str)
-        producer.send(message)
-      }
-
-      Thread.sleep(1000)
-    }
-  }
-
-}
+///opt/cloudera/parcels/CDH-5.6.0-1.cdh5.6.0.p0.45/lib/spark/bin/spark-submit \
+//--class KafkaWordCount \
+//--master local[8] \
+//GraphXStream.jar \
+//bb0103003:2181 test-consumer-group testlxr 1
