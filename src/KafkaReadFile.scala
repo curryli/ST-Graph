@@ -22,13 +22,14 @@ class KafkaProduceMsg() extends Runnable{
   
   def run() : Unit = {
     while(true){
-      val file = "/home/hdanaly/xrli/graphx/GStream/transaction"
+      val file = "/home/hdanaly/xrli/graphx/GStream/graphTest.txt"
 
       try{
         
           val reader = Source.fromFile(file.toString(), "UTF-8")
 
           for(line <- reader.getLines()){
+            Thread.sleep(3000)
             val message = new KeyedMessage[String, String]("testlxr", null, line);
             println(line);
             producer.send(message)

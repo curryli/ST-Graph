@@ -26,13 +26,14 @@ class ProduceDir(brokerList : String, topic : String) extends Runnable{
   
   def run() : Unit = {
     while(true){
-      val files = Path(this.DIR).walkFilter(p => p.isFile && p.name.contains("transaction"))
+      val files = Path(this.DIR).walkFilter(p => p.isFile && p.name.contains("graphTest.txt"))
 
       try{
          for(file <- files){
           val reader = Source.fromFile(file.toString(), "UTF-8")
 
           for(line <- reader.getLines()){
+            Thread.sleep(3000)
             val message = new KeyedMessage[String, String](this.TARGET_TOPIC, line)
             println(line)
             producer.send(message)
