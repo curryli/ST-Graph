@@ -6,7 +6,7 @@ import org.apache.spark.streaming.{Milliseconds, Seconds, StreamingContext}
 import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.storage.StorageLevel
 import scala.collection.mutable
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
+import org.apache.kafka.clients.producer._
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
  
