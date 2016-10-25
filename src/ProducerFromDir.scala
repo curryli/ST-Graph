@@ -26,7 +26,7 @@ class ProduceDir(brokerList : String, topic : String) extends Runnable{
   
   def run() : Unit = {
     while(true){
-      val files = Path(this.DIR).walkFilter(p => p.isFile && p.name.contains("graphTest.txt"))
+      val files = Path(this.DIR).walkFilter(p => p.isFile && p.name.contains("001098_0"))
 
       try{
          for(file <- files){

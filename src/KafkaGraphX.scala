@@ -26,61 +26,73 @@ object KafkaGraphX {
     
     
     val vertexArray = Array(
-      (1L, ("Alice", 28)),
-      (2L, ("Bob", 27)),
-      (3L, ("Charlie", 65)),
-      (4L, ("David", 42)),
-      (5L, ("Ed", 55)),
-      (6L, ("Fran", 50))
+      (0L, "")
     )
+    
     //边的数据类型ED:Int
     val edgeArray = Array(
-      Edge(2L, 1L, 7)
+      Edge(0L, 0L, 0)
     )
  
     //构造vertexRDD和edgeRDD
-    val vertexRDD: RDD[(Long, (String, Int))] = sc.parallelize(vertexArray)
+    var vertexRDD: RDD[(Long, String)] = sc.parallelize(vertexArray)
     var edgeRDD: RDD[Edge[Int]] = sc.parallelize(edgeArray)
- 
-    //构造图Graph[VD,ED]
-    val graph: Graph[(String, Int), Int] = Graph(vertexRDD, edgeRDD)
-    
-    
+
     val Array(zkQuorum, group, topics, numThreads) = args
 
-
-    
     // 通过Socket获取数据，该处需要提供Socket的主机名和端口号，数据保存在内存和硬盘中
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
     //lines.print()
     
-    val edgeInfo = lines.map(_.split("\\s+"))
+    var edgeInfo = lines.map(_.split("\\001"))
  
     var incEdgeDStream = edgeInfo.transform(rdd=>{
-      rdd.map(x=>Edge(x(0).toLong,x(1).toLong,x(2).toInt))
+      rdd.map(x=>Edge( BKDRHash(x(0)), BKDRHash(x(1)), x(3).toInt))
     })
     
-    
-    
-   val newtemp = incEdgeDStream.transform{rdd=>
-      val temp = edgeRDD.union(rdd)
-      edgeRDD = temp
-      edgeRDD.cache()     //或者persist。       如果没有这句， 过段时间会出现   Attempted to use BlockRDD[69] at createStream at ... after its blocks have been removed
-      val graph = Graph.fromEdges(edgeRDD, "1")
-      val result = graph.degrees
-      graph.unpersistVertices(blocking=false)
-      result
-      
-  }
-    
-    
-    newtemp.print()
 
+    
+   val resultDstream = edgeInfo.transform{rdd=>
+     var incErdd = rdd.map(x=>Edge( BKDRHash(x(0)), BKDRHash(x(1)), x(3).toInt))
+     val unionERDD = edgeRDD.union(incErdd)
+      edgeRDD = unionERDD 
+      edgeRDD.cache()     //或者persist。       如果没有这句， 过段时间会出现   Attempted to use BlockRDD[69] at createStream at ... after its blocks have been removed
+ 
+      var incVsrcrdd = rdd.map(x=>(BKDRHash(x(0)), x(0)))
+      var incVdstrdd = rdd.map(x=>(BKDRHash(x(1)), x(1)))
+      
+     val unionVRDD = vertexRDD.union(incVsrcrdd).union(incVdstrdd)
+      vertexRDD = unionVRDD
+      vertexRDD.cache()     //或者persist。       如果没有这句， 过段时间会出现   Attempted to use BlockRDD[69] at createStream at ... after its blocks have been removed
+      
+      val graph = Graph(vertexRDD,edgeRDD)
+      
+      val vertice = graph.vertices   //随便什么，也可以是graph.degrees
+      val edge = graph.edges   //随便什么，也可以是graph.degrees
+      graph.unpersistVertices(blocking=false)
+      //vertice
+      edge
+  }
+
+    resultDstream.print()
   
     ssc.start()
     ssc.awaitTermination()
   }
+  
+  
+  
+  def BKDRHash( str:String) :Long ={
+   val seed:Long  = 131 // 31 131 1313 13131 131313 etc..
+   var hash:Long  = 0
+   for(i <- 0 to str.length-1){
+    hash = hash * seed + str.charAt(i)
+    hash = hash.&("137438953471".toLong)        //0x1FFFFFFFFF              //固定一下长度
+   }
+   return hash 
+}
+  
 }
 
 
