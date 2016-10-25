@@ -33,7 +33,7 @@ class ProduceDir(brokerList : String, topic : String) extends Runnable{
           val reader = Source.fromFile(file.toString(), "UTF-8")
 
           for(line <- reader.getLines()){
-            Thread.sleep(3000)
+            Thread.sleep(1000)
             val message = new KeyedMessage[String, String](this.TARGET_TOPIC, line)
             println(line)
             producer.send(message)
@@ -51,7 +51,7 @@ class ProduceDir(brokerList : String, topic : String) extends Runnable{
 
       try{
         //sleep for 2 seconds after send a micro batch of message
-        Thread.sleep(2000)
+        Thread.sleep(1000)
       }catch{
         case e : Exception => println(e)
       }
@@ -73,4 +73,9 @@ object KafkaProducer {
 //--master local[8] \
 //GraphXStream.jar \
 //bB0104009:9092 testlxr
+
+
+//hadoop fs -cat xrlhadoop fs -get xrli/HiveTrans03/001098_0
+//c1a92aef096e9c64cf3daee937d53b984cabca5e55944f67e6ae9bd2bca12352300000.01
+//08ad95d3c09dd616905784ff932a03e44cb0326d6bc4471c5b071ae75a0f86b9150000.01
 

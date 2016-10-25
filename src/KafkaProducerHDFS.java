@@ -16,7 +16,7 @@ import org.apache.hadoop.fs.Path;
 
 public class KafkaProducerHDFS{
 	
-	private static final String TOPIC = "testlxr"; //kafka创建的topic  
+	private static final String TOPIC = "testgraphx"; //kafka创建的topic  
 
 	public static void main(String[] args) throws IOException, InterruptedException {    
 		    Properties props = new Properties();
@@ -35,8 +35,8 @@ public class KafkaProducerHDFS{
 	        cfg.set("dfs.namenode.rpc-address.nameservice1.namenode1285", "bB0203002:8020");   ///etc/hadoop/conf    到hdfs-site.xml文件里找8020端口（默认的namenode RPC交互端口进行配置）  
 	        cfg.set("dfs.namenode.rpc-address.nameservice1.namenode1176", "bB0103002:8020");  //有两个8020端口，都配置进去HDFS 的HA 功能通过配置Active/Standby 两个NameNodes 实现在集群中对NameNode 的热备
 
-	        String hdfs = "hdfs://nameservice1/user/hdanaly/xrli/hdfstest";   
-	       
+	        //String hdfs = "hdfs://nameservice1/user/hdanaly/xrli/hdfstest";   
+	        String hdfs = "hdfs://nameservice1/user/hdanaly/xrli/HiveTrans03";  
 	        
 	        
 	        FileSystem fs = FileSystem.get(URI.create(hdfs),cfg);  
@@ -49,9 +49,9 @@ public class KafkaProducerHDFS{
 		    	  
 		        String line = null;
 	            while (null != (line = br.readLine())) {
-	      	      Thread.sleep(1000);
+	      	      Thread.sleep(1);
 	      	      KeyedMessage<String, String> message = new KeyedMessage<String, String>(TOPIC, null, line);
-	      	      System.out.println(line);
+	      	      //System.out.println(line);
 	              producer.send(message);
 	      	  
 	            }

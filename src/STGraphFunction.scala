@@ -10,7 +10,7 @@ import org.apache.kafka.clients.producer._
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
  
-object KafkaGraphX {
+object STGraphFunction {
   def main(args: Array[String]) {
     //屏蔽日志
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
@@ -19,8 +19,8 @@ object KafkaGraphX {
   //设置运行环境
     val conf = new SparkConf().setAppName("GraphXStream") 
     val sc = new SparkContext(conf)
-    val ssc = new StreamingContext(sc, Seconds(3))
-    ssc.checkpoint("checkpoint")
+    val ssc = new StreamingContext(sc, Seconds(60))   //修改每次处理时间的间隔
+    //ssc.checkpoint("checkpoint")
  
     conf.set("spark.streaming.unpersist", "false") 
     
@@ -40,7 +40,6 @@ object KafkaGraphX {
 
     val Array(zkQuorum, group, topics, numThreads) = args
 
-    // 通过Socket获取数据，该处需要提供Socket的主机名和端口号，数据保存在内存和硬盘中
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
     //lines.print()
@@ -62,17 +61,32 @@ object KafkaGraphX {
       var incVsrcrdd = rdd.map(x=>(BKDRHash(x(0)), x(0)))
       var incVdstrdd = rdd.map(x=>(BKDRHash(x(1)), x(1)))
       
-     val unionVRDD = vertexRDD.union(incVsrcrdd).union(incVdstrdd)
+      val unionVRDD = vertexRDD.union(incVsrcrdd).union(incVdstrdd)
       vertexRDD = unionVRDD
       vertexRDD.cache()     //或者persist。       如果没有这句， 过段时间会出现   Attempted to use BlockRDD[69] at createStream at ... after its blocks have been removed
       
       val graph = Graph(vertexRDD,edgeRDD)
       
-      val vertice = graph.vertices   //随便什么，也可以是graph.degrees
-      val edge = graph.edges   //随便什么，也可以是graph.degrees
-      graph.unpersistVertices(blocking=false)
-      //vertice
-      edge
+      //Degrees操作
+ 
+    def max(a: (VertexId, Int), b: (VertexId, Int)): (VertexId, Int) = {
+      if (a._2 > b._2) a else b
+    }
+    
+    val vcount = graph.numVertices 
+    val ecount = graph.numEdges
+    
+    val MAXOUT = graph.outDegrees.reduce(max) 
+    val MAXIN = graph.inDegrees.reduce(max) 
+    val MAXDeg =  graph.degrees.reduce(max)
+    //println
+    
+    graph.unpersistVertices(blocking=false)
+
+     sc.parallelize(Seq(vcount, ecount, MAXOUT, MAXIN, MAXDeg))   //sc.parallelize(List(MAXOUT, MAXIN, MAXDeg))
+       
+      //如果想用checkpoint，必须要把 Seq(vcount, ecount, MAXOUT, MAXIN, MAXDeg) 自定义一个类结构，然后extends　serializable　进行序列化
+     
   }
 
     resultDstream.print()
@@ -99,14 +113,3 @@ object KafkaGraphX {
 //KafkaGraphxX.sh
 //KafkaProducerHDFS.sh
 
-
-
-//KafkaGraphxX.sh
-//KafkaProducer.sh
-
-
-///opt/cloudera/parcels/CDH-5.6.0-1.cdh5.6.0.p0.45/lib/spark/bin/spark-submit \
-//--class KafkaGraphX \
-//--master local[8] \
-//GraphXStream.jar \
-//bb0103003:2181 test-consumer-group testgraphx 1
