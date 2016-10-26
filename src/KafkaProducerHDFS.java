@@ -49,7 +49,7 @@ public class KafkaProducerHDFS{
 		    	  
 		        String line = null;
 	            while (null != (line = br.readLine())) {
-	      	      Thread.sleep(1);
+	      	      Thread.sleep(5);
 	      	      KeyedMessage<String, String> message = new KeyedMessage<String, String>(TOPIC, null, line);
 	      	      //System.out.println(line);
 	              producer.send(message);

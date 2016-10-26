@@ -11,18 +11,22 @@ import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
  
 object STGraphFunction {
+  def max(a: (VertexId, Int), b: (VertexId, Int)): (VertexId, Int) = {
+      if (a._2 > b._2) a else b
+    }
+  
   def main(args: Array[String]) {
     //屏蔽日志
-    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+    Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     Logger.getLogger("org.eclipse.jetty.server").setLevel(Level.OFF)
 
   //设置运行环境
     val conf = new SparkConf().setAppName("GraphXStream") 
     val sc = new SparkContext(conf)
-    val ssc = new StreamingContext(sc, Seconds(60))   //修改每次处理时间的间隔
+    val ssc = new StreamingContext(sc, Seconds(1))   //修改每次处理时间的间隔
     //ssc.checkpoint("checkpoint")
  
-    conf.set("spark.streaming.unpersist", "false") 
+    conf.set("spark.streaming.unpersist", "true") 
     
     
     val vertexArray = Array(
@@ -56,22 +60,20 @@ object STGraphFunction {
      var incErdd = rdd.map(x=>Edge( BKDRHash(x(0)), BKDRHash(x(1)), x(3).toInt))
      val unionERDD = edgeRDD.union(incErdd)
       edgeRDD = unionERDD 
-      edgeRDD.cache()     //或者persist。       如果没有这句， 过段时间会出现   Attempted to use BlockRDD[69] at createStream at ... after its blocks have been removed
+      edgeRDD.persist(StorageLevel.MEMORY_AND_DISK_SER)     //或者persist。       如果没有这句， 过段时间会出现   Attempted to use BlockRDD[69] at createStream at ... after its blocks have been removed
  
       var incVsrcrdd = rdd.map(x=>(BKDRHash(x(0)), x(0)))
       var incVdstrdd = rdd.map(x=>(BKDRHash(x(1)), x(1)))
       
       val unionVRDD = vertexRDD.union(incVsrcrdd).union(incVdstrdd)
       vertexRDD = unionVRDD
-      vertexRDD.cache()     //或者persist。       如果没有这句， 过段时间会出现   Attempted to use BlockRDD[69] at createStream at ... after its blocks have been removed
+      vertexRDD.persist(StorageLevel.MEMORY_AND_DISK_SER)    //或者persist。       如果没有这句， 过段时间会出现   Attempted to use BlockRDD[69] at createStream at ... after its blocks have been removed
       
       val graph = Graph(vertexRDD,edgeRDD)
       
       //Degrees操作
  
-    def max(a: (VertexId, Int), b: (VertexId, Int)): (VertexId, Int) = {
-      if (a._2 > b._2) a else b
-    }
+    
     
     val vcount = graph.numVertices 
     val ecount = graph.numEdges
@@ -82,10 +84,11 @@ object STGraphFunction {
     //println
     
     graph.unpersistVertices(blocking=false)
+    
 
-     sc.parallelize(Seq(vcount, ecount, MAXOUT, MAXIN, MAXDeg))   //sc.parallelize(List(MAXOUT, MAXIN, MAXDeg))
+    sc.parallelize(Seq(vcount, ecount, MAXOUT, MAXIN, MAXDeg))   //sc.parallelize(List(MAXOUT, MAXIN, MAXDeg))
        
-      //如果想用checkpoint，必须要把 Seq(vcount, ecount, MAXOUT, MAXIN, MAXDeg) 自定义一个类结构，然后extends　serializable　进行序列化
+    //如果想用checkpoint，必须要把 Seq(vcount, ecount, MAXOUT, MAXIN, MAXDeg) 自定义一个类结构，然后extends　serializable　进行序列化
      
   }
 
