@@ -1,0 +1,41 @@
+创建topic
+kafka-topics  \
+   --create \
+   --zookeeper bb0103003:2181 \
+   --replication-factor 1 \
+   --partitions 1 \
+   --topic testlxr
+
+查看topic
+kafka-topics \
+--zookeeper bb0103003:2181 \
+--list
+
+kafka-topics \
+--zookeeper bb0103003:2181 \
+--describe
+
+删除topic
+kafka-topics  \
+   --delete \
+   --zookeeper bb0103003:2181 \
+   --topic testlxr
+
+
+
+运行jps，可查看java相关的进行
+如果想关掉，  用kill -9 (pid)
+
+
+
+kafka-console-producer \
+--broker-list bB0104009:9092 \
+--topic testlxr
+ 
+
+kafka-console-consumer \
+--zookeeper bb0103003:2181 \
+--topic testlxr \
+--from-beginning
+
+

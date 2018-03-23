@@ -1,0 +1,13 @@
+测试1：
+只测试simpleProducer:
+在consumer窗口运行  kafka-console-consumer --zookeeper bb0103003:2181 --topic test_lxr --from-beginning
+在producer窗口运行  java -cp kafka.jar Demo.simpleProducer
+ 
+测试2：
+只测试producer_for count:
+在consumer窗口运行  kafka-console-consumer --zookeeper bb0103003:2181 --topic test_lxr --from-beginning
+在producer窗口运行  java -cp kafka.jar Demo.producer_for_count
+
+测试3：
+在consumer窗口运行   java -cp kafka.jar Demo.SimpleMovingAvgZkConsumer bb0103003:2181 avg test_lxr 10 120000
+在producer窗口运行  java -cp kafka.jar Demo.producer_for_count
