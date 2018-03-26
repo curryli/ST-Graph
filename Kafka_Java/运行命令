@@ -11,3 +11,12 @@
 测试3：
 在consumer窗口运行   java -cp kafka.jar Demo.SimpleMovingAvgZkConsumer bb0103003:2181 avg test_lxr 10 120000
 在producer窗口运行  java -cp kafka.jar Demo.producer_for_count
+
+
+测试4： 这个命令要升级集群，老集群上不能用
+在consumer窗口运行  java -cp kafka.jar Demo.SimpleMovingAvgNewConsumer bB0104009:9092 g1 v1 10
+在producer窗口运行  java -cp kafka.jar Demo.producer_for_count
+
+
+
+
